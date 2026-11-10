@@ -1,0 +1,22 @@
+{
+  "files": {
+    ".claude/agents/approver.md": "18f268fde224c5cbb045e215a5a3bf49303844b9216c0fd5562cf68f5d71a08e",
+    ".claude/agents/builder.md": "e9bfb8216c0e60e774477062340a78cd79b7f8532692ed95b979f0cab13c2b76",
+    ".claude/agents/intake.md": "86bdda51280b0ce12c8b668a513b3df4a32bf60afcfdfab93ab147dbfafbc895",
+    ".claude/agents/reviewer-code.md": "22a13f759668522bbd211a8aa0334e5a44b4b2d1fa97ac306a867b3cccf72188",
+    ".claude/agents/reviewer-security.md": "a1ce181937b2809ea4647dcb239835200f001ce92f4f62fd4acaa014259a8cce",
+    ".claude/agents/reviewer-ui.md": "62583c43d1e24f4e2c460fd8a3accda0e295640afdda730e61f2b9a9980115ae",
+    ".claude/agents/reviewer-ux.md": "2e8b5212ecce8c6041082865db571036efcee8c0a05a9e3c4d75d13ee79b5688",
+    ".claude/agents/spec-writer.md": "72e3d46d2112ebc5ca9d350e7995b5e18b0e6815decc698b949da7538b4a241e",
+    ".claude/skills/factory/SKILL.md": "498dfe158b48302f300da62238d1a2912803cfcb2c457f263caa86ee635c3c8e",
+    "factory/bin/gate": "516913ecceed151effdb050d64efec8df047abad62ee099924fe6899d509c686",
+    "factory/bin/job": "6effbe1e429e728d079e7ca9b6d6f3b060f2bc56bb827922067432306ab68802",
+    "factory/bin/route": "e245d96e93203c4551ccbcde3dd0b9b8698d0dc167a4b142837a26aea986e3ec",
+    "factory/checks.sh": "c14883a7cf74f62edf2f32a76c74881e2873022205c999f71dc4cbfb1c38f1b4",
+    "factory/config.json": "785d974018bd7265111b58d31e5fd6cc86b2c074bc9df383cec69a954278ae47",
+    "factory/dashboard.html": "99508421e333900965f8e2f5c5572fa1a7b78542189cd2abb6a5358ba43dbd95"
+  },
+  "installed_from": "0.1.0",
+  "skill_source": "dwightfowler-tema/factory-setup",
+  "version": "0.1.0"
+}
