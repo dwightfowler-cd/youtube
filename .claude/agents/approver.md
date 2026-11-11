@@ -58,8 +58,9 @@ Also ESCALATE for this project:
   location or permissions;
 - anything that makes the server write to YouTube (any non-read API call);
 - changes that raise API quota spend by default (e.g. making `search` calls
-  more frequent, or removing or shortening the cache), or touch the
-  `expensive`/`oauth` test markers;
+  more frequent, or removing or shortening the cache);
+- any change that lets a test be skipped, deselected or xfailed, or that excludes
+  tests from the gate;
 - changes to `pyproject.toml` dependencies, the `youtube` entry point, or
   tool names and signatures that existing MCP clients rely on.
 

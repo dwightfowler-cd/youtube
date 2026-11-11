@@ -1,7 +1,7 @@
 """OAuth: real token files, real Google refresh, real account data.
 
-Tests marked `oauth` need a token from `uv run youtube auth`. Without one they are SKIPPED
-and reported as NOT TESTED; they never pass vacuously. The browser consent flow itself cannot be automated
+Tests marked `oauth` need a token from `uv run youtube auth`. Without one they FAIL
+with a message saying so; they are never skipped. The browser consent flow itself cannot be automated
 and is verified by running `youtube auth` by hand once.
 """
 import json
@@ -13,6 +13,9 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from helpers import run_tools, server_env
+
+ZOO = "jNQXAC9IVRw"  # "Me at the zoo", the first YouTube video (2005)
+ZOO_UPLOADS = "UU4QobU6STFB0P71PMvOGN5A"  # the zoo uploader's public uploads playlist
 
 
 def _env_with_config(tmp_path, config_home):
@@ -109,17 +112,23 @@ def test_list_uploads_without_channel_uses_my_channel(tmp_path, real_token_path,
 
 
 @pytest.mark.oauth
-def test_my_playlists_and_playlist_items(tmp_path, real_token_path, real_key):
+def test_my_playlists_returns_a_well_formed_list(tmp_path, real_token_path, real_key):
     env = server_env(tmp_path / "cache")
     (pl,) = run_tools([("my_playlists", {"max_results": 5})], env)
-    d = pl.data
-    assert isinstance(d["items"], list)
-    if not d["items"]:
-        pytest.skip("NOT FULLY TESTED: account has no playlists, so playlist_items was not exercised")
-    first = d["items"][0]
-    (items,) = run_tools([("playlist_items", {"playlist_id": first["id"], "max_results": 5})], env)
-    assert isinstance(items.data["items"], list)
-    assert len(items.data["items"]) <= 5
+    assert not pl.is_error, pl.text
+    # An account with no playlists legitimately returns [], so this checks the shape only.
+    assert isinstance(pl.data["items"], list)
+    assert len(pl.data["items"]) <= 5
+
+
+@pytest.mark.oauth
+def test_playlist_items_of_a_public_playlist(tmp_path, real_token_path, real_key):
+    """Public, permanent reference data, so it never depends on what the account owns."""
+    env = server_env(tmp_path / "cache")
+    (items,) = run_tools([("playlist_items", {"playlist_id": ZOO_UPLOADS, "max_results": 5})], env)
+    assert not items.is_error, items.text
+    ids = [i["contentDetails"]["videoId"] for i in items.data["items"]]
+    assert ZOO in ids
 
 
 @pytest.mark.oauth

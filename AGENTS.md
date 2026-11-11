@@ -17,7 +17,8 @@ read `.gitignore` sees those copies too; exclude `.worktrees/` in its config.
 - Run the server: `uv run youtube` (stdio MCP server, no dev server or port).
 - Validate (same as `factory/checks.sh`): `uv run pytest`,
   `uv run python -m compileall -q src`, `uv build`.
-- `-m expensive` tests spend YouTube API quota; don't run them unprompted.
+- The live `search` test spends 100 YouTube API quota units every run (default quota
+  10,000/day), and every gate run includes it. Don't run the suite in a loop.
 
 ## Testing rule: a misconfigured test is a failure
 
@@ -28,5 +29,6 @@ read `.gitignore` sees those copies too; exclude `.worktrees/` in its config.
 - Never report a test as successful unless it ran and passed. A skipped,
   deselected or not-run test is not a pass: say so plainly ("N tests did not
   run") and list them. Do not write "all tests pass" when any did not run.
-- Tests that are deliberately opted out by marker (for example `-m expensive`)
-  must be named as not run whenever you report test results.
+- Do not deselect tests (no `-m`/`-k` opt-outs in `addopts`, no markers that exclude
+  tests from the gate). `factory/checks.sh` fails on any skipped, xfailed, xpassed
+  or deselected test. If a test is too costly, change the test, not the gate.

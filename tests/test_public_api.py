@@ -177,10 +177,9 @@ def test_no_error_message_ever_contains_the_api_key(env, real_key):
         assert real_key not in r.text and "key=" not in r.text
 
 
-# ---- search (costs 100 units per call) -------------------------------------------------
+# ---- search (costs 100 quota units per run; runs every time) -------------------------------------------------
 
 
-@pytest.mark.expensive
 def test_search_finds_the_zoo_video(env):
     d = one(env, "search", q="Me at the zoo jawed", type="video", max_results=10).data
     assert d["items"], "search returned nothing"

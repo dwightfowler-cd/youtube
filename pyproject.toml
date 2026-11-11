@@ -28,10 +28,9 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-m 'not expensive' -ra"
+addopts = "-ra"
 markers = [
-    "expensive: spends 100 quota units per call (search); run with -m expensive",
-    "oauth: needs a real OAuth token from `uv run youtube auth`; skipped (not passed) without one",
+    "oauth: needs a real OAuth token from `uv run youtube auth`; fails without one (never skipped)",
 ]
 
 [tool.ruff.lint]

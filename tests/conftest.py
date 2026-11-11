@@ -24,7 +24,6 @@ def env(tmp_path, real_key):
 @pytest.fixture(scope="session")
 def real_token_path():
     p = REAL_CONFIG_DIR / "token.json"
-    if not p.exists():
-        pytest.skip(f"NOT TESTED: no OAuth token at {p}. Run `uv run youtube auth` first.")
+    assert p.exists(), f"No OAuth token at {p}. Run `uv run youtube auth` first."
     assert oct(p.stat().st_mode & 0o777) == "0o600", "token.json must be mode 600"
     return p
