@@ -44,12 +44,11 @@ def run_tools(calls, env, launcher=None):
 
     async def go():
         out = []
-        async with stdio_client(params) as (r, w):
-            async with ClientSession(r, w) as s:
-                await s.initialize()
-                for name, args in calls:
-                    res = await s.call_tool(name, args)
-                    out.append(Result(bool(res.isError), res.content[0].text))
+        async with stdio_client(params) as (r, w), ClientSession(r, w) as s:
+            await s.initialize()
+            for name, args in calls:
+                res = await s.call_tool(name, args)
+                out.append(Result(bool(res.isError), res.content[0].text))
         return out
 
     return anyio.run(go)
@@ -60,9 +59,8 @@ def list_tool_names(env, launcher=None):
     params = StdioServerParameters(command=cmd[0], args=cmd[1:], env=env)
 
     async def go():
-        async with stdio_client(params) as (r, w):
-            async with ClientSession(r, w) as s:
-                await s.initialize()
-                return {t.name for t in (await s.list_tools()).tools}
+        async with stdio_client(params) as (r, w), ClientSession(r, w) as s:
+            await s.initialize()
+            return {t.name for t in (await s.list_tools()).tools}
 
     return anyio.run(go)

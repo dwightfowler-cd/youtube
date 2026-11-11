@@ -23,6 +23,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "pytest>=9.2.0",
+    "ruff>=0.17.4",
 ]
 
 [tool.pytest.ini_options]
@@ -32,3 +33,8 @@ markers = [
     "expensive: spends 100 quota units per call (search); run with -m expensive",
     "oauth: needs a real OAuth token from `uv run youtube auth`; skipped (not passed) without one",
 ]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+# The codebase uses ~100-column lines; line length is style, not a bug.
+ignore = ["E501"]

@@ -7,10 +7,12 @@
 #
 # Excluded on purpose: tests marked `expensive` (spend API quota) and `oauth`
 # (need a real token); pyproject's addopts already deselects `expensive`, and
-# `oauth` tests skip without a token. No linter or typechecker is configured.
+# `oauth` tests skip without a token. Lint is ruff (rules in pyproject.toml); no
+# typechecker is configured.
 set -euo pipefail
 
 uv sync --frozen
+uv run --frozen ruff check .
 uv run --frozen pytest
 uv run --frozen python -m compileall -q src
 uv build --out-dir "$(mktemp -d)"

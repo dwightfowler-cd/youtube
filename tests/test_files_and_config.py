@@ -4,8 +4,8 @@ import subprocess
 import sys
 
 import pytest
-
 from helpers import run_tools, server_env
+
 from youtube import server
 
 KEY = "AIzaSyTESTTESTTESTTESTTESTTESTTESTTEST1"  # only ever sent to Google as a bogus key

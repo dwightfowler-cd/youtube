@@ -1,9 +1,6 @@
-import json
-import os
 import re
 
 import pytest
-
 from helpers import REAL_CONFIG_DIR, server_env
 
 

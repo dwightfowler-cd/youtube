@@ -22,6 +22,7 @@ import sys
 import time
 from pathlib import Path
 
+
 def _xdg(var: str, default: str) -> Path:
     base = os.environ.get(var, "")
     # The XDG spec says relative values must be ignored.

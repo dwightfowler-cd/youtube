@@ -81,19 +81,19 @@ def test_cache_survives_across_processes(tmp_path, env):
     """Two separate real server processes share the on-disk cache."""
     from helpers import run_tools
 
-    (r1,) = run_tools([("get_videos", {"ids": [ZOO]})], env)
+    (_r1,) = run_tools([("get_videos", {"ids": [ZOO]})], env)
     db = tmp_path / "cache" / "youtube-mcp" / "cache.sqlite"
     (row,) = rows(db)
     time.sleep(1.1)
     (r2,) = run_tools([("get_videos", {"ids": [ZOO]})], env)
-    assert r1.text == r2.text
+    assert _r1.text == r2.text
     assert rows(db)[0][1] == row[1]
 
 
 def test_deleting_the_cache_is_harmless(tmp_path, env):
     from helpers import run_tools
 
-    (r1,) = run_tools([("get_videos", {"ids": [ZOO]})], env)
+    (_r1,) = run_tools([("get_videos", {"ids": [ZOO]})], env)
     (tmp_path / "cache" / "youtube-mcp" / "cache.sqlite").unlink()
     (r2,) = run_tools([("get_videos", {"ids": [ZOO]})], env)
     assert r2.data["items"][0]["id"] == ZOO

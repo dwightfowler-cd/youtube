@@ -9,10 +9,9 @@ import os
 import stat
 import subprocess
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
-
 from helpers import run_tools, server_env
 
 
@@ -58,6 +57,7 @@ print(server.TOKEN_FILE)
     assert data["refresh_token"] == "r" and data["client_id"] == "id"
 
     from google.oauth2.credentials import Credentials
+
     from youtube import server
 
     again = Credentials.from_authorized_user_file(str(token), server.SCOPES)
@@ -142,7 +142,7 @@ def test_expired_access_token_is_refreshed_by_google_and_saved(
     data = json.loads(real_token_path.read_text())
     assert data.get("refresh_token"), "real token has no refresh_token; re-run `youtube auth`"
     data["token"] = "expired-access-token"
-    data["expiry"] = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    data["expiry"] = (datetime.now(UTC) - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
     token = cfg / "token.json"
     token.write_text(json.dumps(data))
     token.chmod(0o600)
