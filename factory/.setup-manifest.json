@@ -1,4 +1,9 @@
 {
+  "code": {
+    "factory/bin/gate": "498d234338b04f1170b26858b52ffcad64ed4d26b0d13b8ccc02a93eaac69639",
+    "factory/bin/job": "d0f0b92ac3a5476deb78c98130369decf601fe63a00abe3a658b9508e3119aa2",
+    "factory/bin/route": "e55f4344eaeb9846f34c797acb6f2c30ea3bc3ce7854a7e27579809495e38c9d"
+  },
   "files": {
     ".claude/agents/approver.md": "18f268fde224c5cbb045e215a5a3bf49303844b9216c0fd5562cf68f5d71a08e",
     ".claude/agents/builder.md": "e9bfb8216c0e60e774477062340a78cd79b7f8532692ed95b979f0cab13c2b76",
@@ -17,6 +22,9 @@
     "factory/dashboard.html": "99508421e333900965f8e2f5c5572fa1a7b78542189cd2abb6a5358ba43dbd95"
   },
   "installed_from": "0.1.0",
+  "reviewed": {
+    "factory/checks.sh": "e0547a1b340b52f5ba538169720c94f973d2cfe3993566f48f18878ad907e378"
+  },
   "skill_source": "dwightfowler-tema/factory-setup",
-  "version": "0.2.0"
+  "version": "0.3.0"
 }
