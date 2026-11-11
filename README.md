@@ -53,7 +53,8 @@ Read-only stdio MCP server for the YouTube Data API v3. A `uv` package; the serv
 | Tool | Cost |
 |---|---|
 | `my_channel`, `my_playlists`, `my_subscriptions` (OAuth) | 1 |
-| `get_channel`, `list_uploads`, `playlist_items`, `get_comments` | 1/page |
+| `get_channel`, `list_uploads`, `get_comments` | 1/page |
+| `playlist_items` | 1/page, +1/page with `include_durations` |
 | `get_videos` | 1 per 50 ids |
 | `search` | **100** |
 

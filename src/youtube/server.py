@@ -271,15 +271,28 @@ def build_server():
 
     @mcp.tool()
     def playlist_items(
-        playlist_id: str, max_results: int = 50, page_token: str = ""
+        playlist_id: str, max_results: int = 50, page_token: str = "",
+        include_durations: bool = False,
     ) -> dict:
-        """Videos in a playlist (private ones only if it is yours and authorized). (1 unit/page)"""
+        """Videos in a playlist (private ones only if it is yours and authorized). (1 unit/page)
+        include_durations=True adds a `duration` (ISO 8601, null if unavailable) to each item,
+        at an extra +1 unit per page of up to 50 videos."""
         res = call(
             "playlistItems", True, ttl=300, part="snippet,contentDetails",
             playlistId=playlist_id, maxResults=_clamp(max_results),
             pageToken=page_token or None,
         )
-        return _page(res, res.get("items", []))
+        items = res.get("items", [])
+        if include_durations:
+            ids = [v for i in items if (v := i.get("contentDetails", {}).get("videoId"))]
+            durations = {}
+            for n in range(0, len(ids), 50):
+                videos = call("videos", False, part="contentDetails", id=",".join(ids[n : n + 50]))
+                for v in videos.get("items", []):
+                    durations[v["id"]] = v.get("contentDetails", {}).get("duration")
+            for i in items:
+                i["duration"] = durations.get(i.get("contentDetails", {}).get("videoId"))
+        return _page(res, items)
 
     @mcp.tool()
     def my_subscriptions(max_results: int = 50, page_token: str = "") -> dict:
