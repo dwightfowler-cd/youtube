@@ -1,22 +1,16 @@
-#!/usr/bin/env -S uv run --script
-# /// script
-# requires-python = ">=3.10"
-# dependencies = [
-#   "mcp>=1.2,<2",
-#   "google-api-python-client>=2.100",
-#   "google-auth-oauthlib>=1.2",
-# ]
-# ///
 """youtube-mcp: a read-only stdio MCP server over the YouTube Data API v3.
 
-Run as a server (what Claude Code does):   server.py
-One-time OAuth consent for your account:   server.py auth [--no-browser] [--port 8080]
+Run as a server (what Claude Code does):   youtube
+One-time OAuth consent for your account:   youtube auth [--no-browser] [--port 8080]
+
+Files (XDG): $XDG_CONFIG_HOME/youtube-mcp (default ~/.config/youtube-mcp), mode 700:
+  api_key            API key for public reads (mode 600; restrict it to YouTube Data API v3)
+  client_secret.json Desktop-app OAuth client JSON
+  token.json         OAuth token, written by `youtube auth`
+Cache (disposable): $XDG_CACHE_HOME/youtube-mcp/cache.sqlite (default ~/.cache/...)
 
 Env:
-  YOUTUBE_API_KEY        API key for public reads (restrict it to YouTube Data API v3)
-  YOUTUBE_CLIENT_SECRET  path to the Desktop-app OAuth client JSON
-                         (default ~/.config/youtube-mcp/client_secret.json)
-  YOUTUBE_MCP_DIR        config/cache dir (default ~/.config/youtube-mcp)
+  YOUTUBE_CLIENT_SECRET  override path to the OAuth client JSON
   YOUTUBE_CACHE_TTL      cache lifetime in seconds (default 3600)
 
 Quota (default 10,000 units/day): list calls cost 1, search costs 100.
@@ -28,19 +22,28 @@ import sys
 import time
 from pathlib import Path
 
-CONF_DIR = Path(os.environ.get("YOUTUBE_MCP_DIR", "~/.config/youtube-mcp")).expanduser()
+def _xdg(var: str, default: str) -> Path:
+    base = os.environ.get(var, "")
+    # The XDG spec says relative values must be ignored.
+    return Path(base) if base.startswith("/") else Path(default).expanduser()
+
+
+CONF_DIR = _xdg("XDG_CONFIG_HOME", "~/.config") / "youtube-mcp"  # secrets: keep
+CACHE_DIR = _xdg("XDG_CACHE_HOME", "~/.cache") / "youtube-mcp"  # disposable
 CLIENT_SECRET = Path(
     os.environ.get("YOUTUBE_CLIENT_SECRET", CONF_DIR / "client_secret.json")
 ).expanduser()
+API_KEY_FILE = CONF_DIR / "api_key"
 TOKEN_FILE = CONF_DIR / "token.json"
-CACHE_DB = CONF_DIR / "cache.sqlite"
+CACHE_DB = CACHE_DIR / "cache.sqlite"
 CACHE_TTL = int(os.environ.get("YOUTUBE_CACHE_TTL", "3600"))
 SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"]
 
 
-def _ensure_dir() -> None:
-    CONF_DIR.mkdir(parents=True, exist_ok=True)
-    os.chmod(CONF_DIR, 0o700)
+def _ensure_dir(d: Path | None = None) -> None:
+    d = d or CONF_DIR
+    d.mkdir(parents=True, exist_ok=True)
+    os.chmod(d, 0o700)
 
 
 # --------------------------------------------------------------------------- auth
@@ -70,15 +73,39 @@ def _oauth_creds():
     from google.oauth2.credentials import Credentials
 
     if not TOKEN_FILE.exists():
-        raise RuntimeError(f"Not authorized yet. Run: {sys.argv[0]} auth")
+        raise RuntimeError("Not authorized yet. Run: youtube auth")
     creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
     if not creds.valid:
         if creds.refresh_token:
             creds.refresh(Request())
             _write_token(creds)
         else:
-            raise RuntimeError(f"Token invalid and not refreshable. Run: {sys.argv[0]} auth")
+            raise RuntimeError("Token invalid and not refreshable. Run: youtube auth")
     return creds
+
+
+def _api_key() -> str:
+    """Read the API key from CONF_DIR/api_key (no environment variable).
+
+    The file may hold a bare key or a `YOUTUBE_API_KEY=...` line. It must not be
+    readable by group/others.
+    """
+    if not API_KEY_FILE.exists():
+        raise RuntimeError(f"No API key: create {API_KEY_FILE} (mode 600)")
+    if API_KEY_FILE.stat().st_mode & 0o077:
+        raise RuntimeError(f"{API_KEY_FILE} is accessible by others; run: chmod 600 {API_KEY_FILE}")
+    for line in API_KEY_FILE.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        name, sep, value = line.partition("=")
+        if sep and name.strip() == "YOUTUBE_API_KEY":
+            line = value
+        elif sep:
+            continue
+        if key := line.strip().strip("'\""):
+            return key
+    raise RuntimeError(f"No YOUTUBE_API_KEY found in {API_KEY_FILE}")
 
 
 _clients = {}
@@ -93,23 +120,24 @@ def _yt(oauth: bool):
                 "youtube", "v3", credentials=_oauth_creds(), cache_discovery=False
             )
         else:
-            key = os.environ.get("YOUTUBE_API_KEY")
-            if not key:
-                raise RuntimeError("YOUTUBE_API_KEY is not set")
+            key = _api_key()
             _clients[oauth] = build("youtube", "v3", developerKey=key, cache_discovery=False)
     return _clients[oauth]
 
 
 # -------------------------------------------------------------------------- cache
 def _db() -> sqlite3.Connection:
-    _ensure_dir()
+    _ensure_dir(CACHE_DIR)
     db = sqlite3.connect(CACHE_DB)
+    os.chmod(CACHE_DB, 0o600)  # cached private data (playlists, subscriptions)
     db.execute("CREATE TABLE IF NOT EXISTS c (k TEXT PRIMARY KEY, t REAL, v TEXT)")
     return db
 
 
 def call(resource: str, oauth: bool, ttl: int | None = None, **params) -> dict:
     """Run resource.list(**params) with a SQLite cache. Cache is namespaced by auth mode."""
+    from googleapiclient.errors import HttpError
+
     ttl = CACHE_TTL if ttl is None else ttl
     params = {k: v for k, v in params.items() if v is not None}
     key = json.dumps([resource, oauth, params], sort_keys=True)
@@ -117,7 +145,11 @@ def call(resource: str, oauth: bool, ttl: int | None = None, **params) -> dict:
         row = db.execute("SELECT t, v FROM c WHERE k=?", (key,)).fetchone()
         if row and time.time() - row[0] < ttl:
             return json.loads(row[1])
-        res = getattr(_yt(oauth), resource)().list(**params).execute()
+        try:
+            res = getattr(_yt(oauth), resource)().list(**params).execute()
+        except HttpError as e:
+            # str(HttpError) contains the full request URL, including `key=<API key>`.
+            raise RuntimeError(f"YouTube API error {e.resp.status}: {e.reason}") from None
         db.execute("REPLACE INTO c VALUES (?,?,?)", (key, time.time(), json.dumps(res)))
     return res
 

@@ -1,17 +1,34 @@
 [project]
 name = "youtube"
 version = "0.1.0"
-description = "Add your description here"
+description = "Read-only stdio MCP server for the YouTube Data API v3"
 readme = "README.md"
 authors = [
-    { name = "Dwight Fowler", email = "83466469+dwightfowler-cd@users.noreply.gihub.com" }
+    { name = "Dwight Fowler", email = "83466469+dwightfowler-cd@users.noreply.github.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "mcp>=1.2,<2",
+    "google-api-python-client>=2.100",
+    "google-auth-oauthlib>=1.2",
+]
 
 [project.scripts]
-youtube = "youtube:main"
+youtube = "youtube.server:main"
 
 [build-system]
 requires = ["uv_build>=0.13.4,<0.14.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'not expensive' -ra"
+markers = [
+    "expensive: spends 100 quota units per call (search); run with -m expensive",
+    "oauth: needs a real OAuth token from `uv run youtube auth`; skipped (not passed) without one",
+]
